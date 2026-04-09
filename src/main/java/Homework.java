@@ -1,4 +1,14 @@
+import java.time.Duration;
 import java.util.Scanner;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class Homework {
     public static void RunHomework() {
@@ -16,7 +26,45 @@ public class Homework {
         String url = "";
         String title = "";
 
-        // Your code goes here
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--disable-gpu");
+
+        WebDriver driver =  new ChromeDriver(options);
+
+        try {
+            driver.get("https://acusports.com/");
+
+            WebElement mainYoutubeGrid = driver.findElement(By.cssSelector("#main-youtube-grid"));
+            WebElement playButton = mainYoutubeGrid.findElement(By.cssSelector("button"));
+
+            String fullAriaLabel = playButton.getAttribute("aria-label");
+
+            if (fullAriaLabel != null) {
+                title = fullAriaLabel.replace("Play video ", "").trim();
+            }
+
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", playButton);
+
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("iframe[class='showcase-video-player']")));
+
+            WebElement videoIframe = driver.findElement(By.cssSelector("iframe[class='showcase-video-player']"));
+
+            String rawEmbedUrl = videoIframe.getAttribute("src");
+
+            String[] urlParts = rawEmbedUrl.split("youtube=");
+
+            if (urlParts.length > 1) {
+                url = java.net.URLDecoder.decode(urlParts[1], "UTF-8");
+            } else {
+                url = rawEmbedUrl;
+            }
+        } catch (Exception e) {
+            System.out.println("An error occurred: " + e.getMessage());
+        } finally {
+            driver.quit();
+        }
 
         return "Title: " + title + " Url: " + url;
     }
